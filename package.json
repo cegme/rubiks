@@ -1,0 +1,10 @@
+{
+  "name": "rubiks",
+  "version": "1.0.0",
+  "description": "In-browser two-phase Rubik's Cube solver",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

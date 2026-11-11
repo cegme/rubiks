@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubik's Cube Solver</title>
+  <meta name="description" content="Paint the colors of your Rubik's Cube and get a short sequence of turns that solves it. Runs entirely in your browser.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Crect width='30' height='30' rx='5' fill='%2315171b'/%3E%3Crect x='3' y='3' width='7' height='7' rx='1.5' fill='%23d6342c'/%3E%3Crect x='11.5' y='3' width='7' height='7' rx='1.5' fill='%23f4f4f2'/%3E%3Crect x='20' y='3' width='7' height='7' rx='1.5' fill='%231f5fd1'/%3E%3Crect x='3' y='11.5' width='7' height='7' rx='1.5' fill='%23f2c500'/%3E%3Crect x='11.5' y='11.5' width='7' height='7' rx='1.5' fill='%231f9d55'/%3E%3Crect x='20' y='11.5' width='7' height='7' rx='1.5' fill='%23f28a1a'/%3E%3Crect x='3' y='20' width='7' height='7' rx='1.5' fill='%231f9d55'/%3E%3Crect x='11.5' y='20' width='7' height='7' rx='1.5' fill='%23d6342c'/%3E%3Crect x='20' y='20' width='7' height='7' rx='1.5' fill='%23f4f4f2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <a class="back" href="/">ceg.me</a>
+      <h1>Rubik's Cube Solver</h1>
+      <p class="lede">Paint the colors of your cube onto the diagram. The solver finds a short sequence of turns, usually 19 to 22, and plays it back step by step.</p>
+    </header>
+
+    <section class="card" aria-labelledby="editor-title">
+      <h2 id="editor-title">1. Enter your cube</h2>
+      <p class="hint">Hold the cube with white on top and green facing you. The diagram unfolds it as shown. The center stickers are fixed. Click a sticker, or drag across several, to paint it.</p>
+
+      <div class="palette" id="palette" role="group" aria-label="Paint color"></div>
+
+      <div class="net-wrap">
+        <div class="net" id="net"></div>
+      </div>
+
+      <div class="toolbar">
+        <button type="button" id="solve" class="primary" disabled>Solve</button>
+        <button type="button" id="scramble">Random scramble</button>
+        <button type="button" id="solved">Solved cube</button>
+        <button type="button" id="clear">Clear</button>
+        <label class="inline">Search time
+          <select id="budget">
+            <option value="300">Quick (0.3 s)</option>
+            <option value="1000" selected>Balanced (1 s)</option>
+            <option value="5000">Thorough (5 s)</option>
+            <option value="20000">Maximum (20 s)</option>
+          </select>
+        </label>
+        <label class="inline"><input type="checkbox" id="letters"> Show letters</label>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" id="solution" aria-labelledby="solution-title" hidden>
+      <h2 id="solution-title">2. Solution</h2>
+      <p class="meta" id="solution-meta"></p>
+      <ol class="moves" id="moves"></ol>
+      <p class="now" id="now" aria-live="polite"></p>
+      <div class="toolbar">
+        <button type="button" id="first" aria-label="Back to the start">⏮ Start</button>
+        <button type="button" id="prev">◀ Back</button>
+        <button type="button" id="next" class="primary">Next ▶</button>
+        <button type="button" id="play">Play</button>
+        <button type="button" id="copy">Copy moves</button>
+      </div>
+      <p class="hint">Turns are clockwise when you look straight at that face. A prime (') means counterclockwise and a 2 means a half turn. Left and right arrow keys also step through the moves.</p>
+    </section>
+
+    <details class="about">
+      <summary>How it works</summary>
+      <p>The solver is Kociemba's two-phase algorithm. Phase 1 turns the cube into a position that can be finished using only U, D, R2, L2, F2 and B2. Phase 2 solves it from there. Pruning tables, built in your browser in about half a second, keep both searches small.</p>
+      <p>The first solution is usually 22 to 25 moves. The search then keeps going with a shorter length limit until the search time runs out, which is why a longer budget can find a shorter solution. The shortest possible solution is never longer than 20 moves, and this solver does not prove that its answer is the shortest.</p>
+      <p>The search runs in a Web Worker on your device and nothing is uploaded. Source code: <a href="https://github.com/cegme/rubiks">github.com/cegme/rubiks</a>.</p>
+    </details>
+  </main>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

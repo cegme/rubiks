@@ -1,0 +1,59 @@
+# Rubik's Cube Solver
+
+A Rubik's Cube solver that runs entirely in the browser. Paint the colors of your cube onto the diagram and the solver returns a short sequence of face turns, usually 19 to 22 moves, that you can step through on the diagram.
+
+It is served at https://ceg.me/rubiks/ and the source is at https://github.com/cegme/rubiks.
+
+## How it works
+
+The solver is Kociemba's two-phase algorithm, written from scratch with no dependencies.
+
+1. Phase 1 uses IDA* to find moves that bring the cube into the subgroup G1 = <U, D, R2, L2, F2, B2>. In G1 the corner twist and edge flip are 0 and the four middle-slice edges are in the middle slice.
+2. Phase 2 uses IDA* over G1 moves only to finish the cube.
+3. After the first solution the search continues with a shorter length bound until the time limit, so a longer search time finds shorter solutions. The result is near-optimal. It is not proven to be the shortest.
+
+Pruning tables are built when the page loads, in about half a second, so no data files are shipped. The search runs in a Web Worker so the page stays responsive.
+
+Moves are counted in the half-turn metric (U2 counts as 1).
+
+## Files
+
+| Path | Purpose |
+| --- | --- |
+| `index.html`, `css/style.css` | Page and styles |
+| `js/app.js` | Cube editor and solution player |
+| `js/solver.worker.js` | Web Worker that builds tables and runs searches |
+| `js/solver.js` | Two-phase search |
+| `js/tables.js` | Coordinates, move tables and pruning tables |
+| `js/cube.js` | Facelet and cubie model, validation, move application |
+| `tests/` | Tests for the model and the solver |
+
+Sticker positions and quarter turns in `js/cube.js` are derived from 3D coordinates, so the facelet layout and the cubie moves cannot disagree.
+
+## Input conventions
+
+The cube is a 54 character string of face letters in the order U1..U9, R1..R9, F1..F9, D1..D9, L1..L9, B1..B9. Hold the cube with white on top and green facing you. The center stickers define the faces, so the colors are white for U, red for R, green for F, yellow for D, orange for L and blue for B.
+
+The editor keeps the cube in the URL hash, using `.` for stickers that are not set yet, so a state can be shared or bookmarked.
+
+## Run locally
+
+Modules and workers need a web server, so opening `index.html` from the file system does not work.
+
+```sh
+uv run python -m http.server 8000
+```
+
+Then open http://localhost:8000/.
+
+## Tests
+
+```sh
+node --test
+```
+
+The tests check the cube geometry against physical turn behavior, the validation messages, and that every solution returned for random scrambles solves the cube when applied.
+
+## Hosting
+
+The site is plain static files, served by GitHub Pages from the `main` branch. The `.nojekyll` file turns off Jekyll processing. All asset paths are relative, so the app works under any path such as `/rubiks/`.
