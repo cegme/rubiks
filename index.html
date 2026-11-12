@@ -16,6 +16,8 @@
       <p class="lede">Paint the colors of your cube onto the diagram. The solver finds a short sequence of turns, usually 19 to 22, and plays it back on a 3D cube.</p>
     </header>
 
+    <p id="load-error" class="status error" role="alert" hidden>The page did not finish loading, so the solver is not running. Reload with Ctrl+Shift+R, or Cmd+Shift+R on a Mac, to get the latest files.</p>
+
     <section class="card" aria-labelledby="editor-title">
       <h2 id="editor-title">1. Enter your cube</h2>
       <p class="hint">Hold the cube with white on top and green facing you. The diagram unfolds it as shown. The center stickers are fixed. Click a sticker, or drag across several, to paint it. Undo steps back one change.</p>
@@ -90,6 +92,12 @@
       <p>The search runs in a Web Worker on your device and nothing is uploaded. Source code: <a href="https://github.com/cegme/rubiks">github.com/cegme/rubiks</a>.</p>
     </details>
   </main>
+  <script>
+    // Browsers can keep an older script while loading a newer page. If app.js stops before it is ready, say so.
+    window.addEventListener('error', function () {
+      if (!document.documentElement.dataset.ready) document.getElementById('load-error').hidden = false;
+    });
+  </script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

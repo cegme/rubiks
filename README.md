@@ -76,3 +76,5 @@ The tests check the cube geometry against physical turn behavior, the validation
 ## Hosting
 
 The site is plain static files, served by GitHub Pages from the `main` branch. The `.nojekyll` file turns off Jekyll processing. All asset paths are relative, so the app works under any path such as `/rubiks/`.
+
+GitHub Pages lets browsers keep each file for 10 minutes. For a few minutes after a deploy, a browser can run an older `app.js` against a newer `index.html`. The page then shows a notice that asks for a hard reload (Ctrl+Shift+R, or Cmd+Shift+R on a Mac), and `app.js` does not depend on the optional trigger key being present.

@@ -311,7 +311,7 @@ function showSolution(moves) {
   $('#solution-meta').textContent = summarize(moves, state.triggers);
 
   const used = new Set(state.triggers.map((f) => triggerSlug(f.trigger)));
-  $('#trigger-key').querySelectorAll('li').forEach((li) => li.classList.toggle('used', used.has(li.dataset.t)));
+  $('#trigger-key')?.querySelectorAll('li').forEach((li) => li.classList.toggle('used', used.has(li.dataset.t)));
 
   // Moves that make up a trigger are joined into one colored chunk with the trigger's name under it.
   const items = [];
@@ -496,7 +496,8 @@ function loadCube(cube) {
 
 // The key under the move list: each trigger with its moves in its own color.
 // A trigger the solver can never produce is drawn with a dashed outline.
-$('#trigger-key').replaceChildren(
+// The key is optional. If the page has no #trigger-key the solver must still start.
+$('#trigger-key')?.replaceChildren(
   ...TRIGGERS.map((trigger) => {
     const item = document.createElement('li');
     item.dataset.t = triggerSlug(trigger);
@@ -526,3 +527,5 @@ startWorker();
 render();
 updateStatus();
 updateControls();
+// Tells the load-error notice in index.html that the script got this far.
+document.documentElement.dataset.ready = 'true';
