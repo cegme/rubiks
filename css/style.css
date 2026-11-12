@@ -374,6 +374,11 @@ label.inline { display: inline-flex; align-items: center; gap: 8px; color: var(-
 .about { color: var(--muted); font-size: 0.95rem; max-width: 70ch; }
 .about summary { cursor: pointer; color: var(--fg); }
 
+.more { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.92rem; max-width: 70ch; }
+.more h2 { margin: 0; font-size: 1rem; color: var(--fg); }
+.more ul { margin: 8px 0 0; padding-left: 1.2em; }
+.more li { margin: 5px 0; }
+
 [hidden] { display: none !important; }
 
 @media (max-width: 520px) {
