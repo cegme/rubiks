@@ -13,7 +13,7 @@
     <header>
       <a class="back" href="/">ceg.me</a>
       <h1>Rubik's Cube Solver</h1>
-      <p class="lede">Paint the colors of your cube onto the diagram. The solver finds a short sequence of turns, usually 19 to 22, and plays it back step by step.</p>
+      <p class="lede">Paint the colors of your cube onto the diagram. The solver finds a short sequence of turns, usually 19 to 22, and plays it back on a 3D cube.</p>
     </header>
 
     <section class="card" aria-labelledby="editor-title">
@@ -48,6 +48,16 @@
       <h2 id="solution-title">2. Solution</h2>
       <p class="meta" id="solution-meta"></p>
       <ol class="moves" id="moves"></ol>
+      <div class="stage" aria-hidden="true">
+        <figure class="view">
+          <div class="cube-view" id="view-front"></div>
+          <figcaption>Top, front and right</figcaption>
+        </figure>
+        <figure class="view">
+          <div class="cube-view" id="view-back"></div>
+          <figcaption>Bottom, back and left</figcaption>
+        </figure>
+      </div>
       <p class="now" id="now" aria-live="polite"></p>
       <div class="toolbar">
         <button type="button" id="first" aria-label="Back to the start">⏮ Start</button>
@@ -55,8 +65,16 @@
         <button type="button" id="next" class="primary">Next ▶</button>
         <button type="button" id="play">Play</button>
         <button type="button" id="copy">Copy moves</button>
+        <label class="inline">Speed
+          <select id="speed">
+            <option value="1100">Slow</option>
+            <option value="650" selected>Normal</option>
+            <option value="350">Fast</option>
+            <option value="0">No animation</option>
+          </select>
+        </label>
       </div>
-      <p class="hint">Turns are clockwise when you look straight at that face. A prime (') means counterclockwise and a 2 means a half turn. Left and right arrow keys also step through the moves.</p>
+      <p class="hint">The two cubes show the same cube from opposite sides. The face that turns next is marked with an arrow, and the cube with that face is outlined. A turn is clockwise when you look straight at that face, which is the direction a clock hand moves. A prime (') means counterclockwise and a 2 means a half turn. The left and right arrow keys also step through the moves.</p>
     </section>
 
     <details class="about">

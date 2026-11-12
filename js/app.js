@@ -2,7 +2,8 @@
  * Cube editor and solution player. The search runs in solver.worker.js.
  */
 
-import { FACE_LETTERS, SOLVED, applyMoves, parseMove, randomScramble, validate } from './cube.js';
+import { FACE_LETTERS, SOLVED, applyMoves, invertMoves, parseMove, randomScramble, validate } from './cube.js';
+import { CubeStage } from './view3d.js';
 
 const COLOR = { U: 'white', R: 'red', F: 'green', D: 'yellow', L: 'orange', B: 'blue' };
 const FACE = { U: 'top', R: 'right', F: 'front', D: 'bottom', L: 'left', B: 'back' };
@@ -20,6 +21,13 @@ const state = {
 };
 const setCenters = () => FACE_LETTERS.split('').forEach((letter, f) => (state.stickers[f * 9 + 4] = letter));
 setCenters();
+
+const stage = new CubeStage([$('#view-front'), $('#view-back')]);
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+/** Milliseconds for the turn animation of a move. Half turns take 1.5 times as long. */
+const turnMs = (move) => (reducedMotion.matches ? 0 : Number($('#speed').value) * (move.endsWith('2') ? 1.5 : 1));
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+let goToId = 0;
 
 /* ---------- worker ---------- */
 
@@ -256,7 +264,7 @@ function showSolution(moves) {
       chip.type = 'button';
       chip.className = 'chip';
       chip.textContent = move;
-      chip.addEventListener('click', () => goTo(i + 1));
+      chip.addEventListener('click', () => (pause(), goTo(i + 1, true)));
       item.append(chip);
       return item;
     }),
@@ -266,6 +274,7 @@ function showSolution(moves) {
 
 function clearSolution() {
   pause();
+  stage.settle();
   state.solution = null;
   state.step = 0;
   $('#solution').hidden = true;
@@ -277,12 +286,19 @@ function describe(move) {
   const index = parseMove(move);
   const face = FACE[move[0]];
   const turn = ['a quarter turn clockwise', 'a half turn', 'a quarter turn counterclockwise'][index % 3];
-  return `Turn the ${face} face ${turn}.`;
+  return `Turn the ${face} face (${COLOR[move[0]]} center) ${turn}, as you look straight at that face.`;
 }
 
-function goTo(step) {
+/**
+ * Moves the player to a step. With animate set and a step that is one move
+ * away, the 3D cube plays that turn. Other jumps change the cube at once. The
+ * promise resolves when the cube has stopped moving.
+ */
+async function goTo(step, animate = false) {
   const n = state.solution.length;
+  const from = state.step;
   state.step = Math.max(0, Math.min(n, step));
+  const id = ++goToId;
   $('#moves').querySelectorAll('.chip').forEach((chip, i) => {
     chip.classList.toggle('done', i < state.step);
     chip.classList.toggle('current', i === state.step);
@@ -296,24 +312,47 @@ function goTo(step) {
   }
   render();
   updateControls();
+
+  const to = state.step;
+  stage.settle();
+  if (animate && (to === from + 1 || to === from - 1)) {
+    const move = to > from ? state.solution[from] : invertMoves([state.solution[to]])[0];
+    await stage.turn(move, turnMs(move));
+  } else {
+    stage.set(facelets());
+  }
+  if (id === goToId) stage.preview(state.solution?.[state.step] ?? null);
 }
 
 function pause() {
-  clearInterval(state.playing);
   state.playing = null;
 }
 
-function togglePlay() {
+/** How long the arrow for the next move stays up before Play turns the face. */
+function holdMs(move) {
+  const ms = turnMs(move);
+  return ms === 0 ? 900 : Math.max(350, Math.round(ms * 0.7));
+}
+
+async function togglePlay() {
   if (state.playing) {
     pause();
-  } else {
-    if (state.step >= state.solution.length) goTo(0);
-    state.playing = setInterval(() => {
-      if (state.step >= state.solution.length - 1) pause();
-      goTo(state.step + 1);
-    }, 900);
+    updateControls();
+    return;
   }
+  if (state.step >= state.solution.length) await goTo(0);
+  const token = Symbol('play');
+  state.playing = token;
   updateControls();
+  while (state.playing === token && state.step < state.solution.length) {
+    await sleep(holdMs(state.solution[state.step]));
+    if (state.playing !== token) return;
+    await goTo(state.step + 1, true);
+  }
+  if (state.playing === token) {
+    pause();
+    updateControls();
+  }
 }
 
 /* ---------- buttons ---------- */
@@ -329,8 +368,8 @@ $('#clear').addEventListener('click', () => {
   changed();
 });
 $('#first').addEventListener('click', () => (pause(), goTo(0)));
-$('#prev').addEventListener('click', () => (pause(), goTo(state.step - 1)));
-$('#next').addEventListener('click', () => (pause(), goTo(state.step + 1)));
+$('#prev').addEventListener('click', () => (pause(), goTo(state.step - 1, true)));
+$('#next').addEventListener('click', () => (pause(), goTo(state.step + 1, true)));
 $('#play').addEventListener('click', togglePlay);
 $('#copy').addEventListener('click', async (event) => {
   try {
@@ -346,8 +385,8 @@ window.addEventListener('keydown', (event) => {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
   if (KEYS[event.key.toLowerCase()]) setPaint(KEYS[event.key.toLowerCase()]);
-  else if (state.solution && event.key === 'ArrowRight') (pause(), goTo(state.step + 1));
-  else if (state.solution && event.key === 'ArrowLeft') (pause(), goTo(state.step - 1));
+  else if (state.solution && event.key === 'ArrowRight') (pause(), goTo(state.step + 1, true));
+  else if (state.solution && event.key === 'ArrowLeft') (pause(), goTo(state.step - 1, true));
 });
 
 function loadCube(cube) {

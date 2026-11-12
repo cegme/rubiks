@@ -1,6 +1,6 @@
 # Rubik's Cube Solver
 
-A Rubik's Cube solver that runs entirely in the browser. Paint the colors of your cube onto the diagram and the solver returns a short sequence of face turns, usually 19 to 22 moves, that you can step through on the diagram.
+A Rubik's Cube solver that runs entirely in the browser. Paint the colors of your cube onto the diagram and the solver returns a short sequence of face turns, usually 19 to 22 moves, that you can step through on an animated 3D cube.
 
 It is served at https://ceg.me/rubiks/ and the source is at https://github.com/cegme/rubiks.
 
@@ -16,17 +16,26 @@ Pruning tables are built when the page loads, in about half a second, so no data
 
 Moves are counted in the half-turn metric (U2 counts as 1).
 
+## The 3D player
+
+The solution card shows the cube twice, from opposite corners. One view shows the top, front and right faces and the other shows the bottom, back and left faces, so every face turn is visible in one of them. The face that turns next is marked with an arrow that shows the direction, and the view that contains that face is outlined. Next, Back, Play and the arrow keys animate the turn. Jumping to another step with a chip or Start changes the cube at once. The Speed menu sets the animation time, and the page skips the animation when the browser asks for reduced motion.
+
+The views are plain CSS 3D transforms with no library. The cube is 27 cubies. A turn rotates the 9 cubies of one layer about the cube center, and when it ends the colors are redrawn from the new facelet string and the cubies return to their slots. The frame after the swap is the same as the last frame of the rotation, so there is no visible jump.
+
+The rotation axis and direction come from the same model as the solver. The checks that need a browser measured every sticker in both views for all 18 moves. With the layer rotated to the end of the turn, each moved sticker landed on the slot that `QUARTER_PERMS` predicts, to within 0.001 px.
+
 ## Files
 
 | Path | Purpose |
 | --- | --- |
 | `index.html`, `css/style.css` | Page and styles |
 | `js/app.js` | Cube editor and solution player |
+| `js/view3d.js` | 3D cube views and the animated face turns |
 | `js/solver.worker.js` | Web Worker that builds tables and runs searches |
 | `js/solver.js` | Two-phase search |
 | `js/tables.js` | Coordinates, move tables and pruning tables |
 | `js/cube.js` | Facelet and cubie model, validation, move application |
-| `tests/` | Tests for the model and the solver |
+| `tests/` | Tests for the model, the solver and the layer and sticker data behind the 3D view |
 
 Sticker positions and quarter turns in `js/cube.js` are derived from 3D coordinates, so the facelet layout and the cubie moves cannot disagree.
 

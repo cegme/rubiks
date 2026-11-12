@@ -13,7 +13,7 @@
 export const FACE_LETTERS = 'URFDLB';
 export const SOLVED = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
 
-const VECTORS = {
+export const VECTORS = {
   U: [0, 1, 0],
   R: [1, 0, 0],
   F: [0, 0, 1],
@@ -44,7 +44,8 @@ function stickerPosition(face, row, col) {
 const key = (pos, normal) => `${pos}|${normal}`;
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-const STICKERS = [];
+/** Cubie position and outward normal of each of the 54 stickers, in facelet order. */
+export const STICKERS = [];
 for (const face of FACE_LETTERS) {
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
