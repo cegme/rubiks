@@ -18,7 +18,7 @@
 
     <section class="card" aria-labelledby="editor-title">
       <h2 id="editor-title">1. Enter your cube</h2>
-      <p class="hint">Hold the cube with white on top and green facing you. The diagram unfolds it as shown. The center stickers are fixed. Click a sticker, or drag across several, to paint it.</p>
+      <p class="hint">Hold the cube with white on top and green facing you. The diagram unfolds it as shown. The center stickers are fixed. Click a sticker, or drag across several, to paint it. Undo steps back one change.</p>
 
       <div class="palette" id="palette" role="group" aria-label="Paint color"></div>
 
@@ -28,6 +28,7 @@
 
       <div class="toolbar">
         <button type="button" id="solve" class="primary" disabled>Solve</button>
+        <button type="button" id="undo" title="Undo the last color change (Ctrl+Z or Cmd+Z)" aria-keyshortcuts="Control+Z Meta+Z" disabled>Undo</button>
         <button type="button" id="scramble">Random scramble</button>
         <button type="button" id="solved">Solved cube</button>
         <button type="button" id="clear">Clear</button>
@@ -76,6 +77,16 @@
       </div>
       <p class="hint">The two cubes show the same cube from opposite sides. The face that turns next is marked with an arrow, and the cube with that face is outlined. A turn is clockwise when you look straight at that face, which is the direction a clock hand moves. A prime (') means counterclockwise and a 2 means a half turn. The left and right arrow keys also step through the moves.</p>
     </section>
+
+    <details class="about">
+      <summary>Trigger names</summary>
+      <p>A trigger is a short sequence of turns that cubers practice until they can do it without thinking. When one appears in the solution, its chips are boxed together and labeled with its name. A trigger also counts when it uses other faces, so F R F' R' is labeled as Rightie with the cube turned. The solver picks solutions for their length, not for their structure, so most solutions contain no trigger at all.</p>
+      <div class="table-wrap">
+        <table class="triggers">
+          <tbody id="trigger-list"></tbody>
+        </table>
+      </div>
+    </details>
 
     <details class="about">
       <summary>How it works</summary>

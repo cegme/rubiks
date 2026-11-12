@@ -211,6 +211,30 @@ label.inline { display: inline-flex; align-items: center; gap: 8px; color: var(-
 }
 .chip.done { opacity: 0.45; }
 .chip.current { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); opacity: 1; }
+
+/* a trigger: its chips boxed together with the name underneath */
+.moves .group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 7px 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+  max-width: 100%;
+}
+.moves .group.active { border-color: var(--accent); }
+.moves { align-items: flex-start; }
+/* line single chips up with the chips inside a box (its padding plus border) */
+.moves > li:not(.group) { padding-top: 6px; }
+.group-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.group-name { font-size: 0.78rem; line-height: 1.25; color: var(--muted); }
+
+.table-wrap { overflow-x: auto; }
+.triggers { border-collapse: collapse; margin-top: 4px; }
+.triggers th, .triggers td { padding: 6px 14px 6px 0; text-align: left; vertical-align: top; border-top: 1px solid var(--line); }
+.triggers th { font-weight: 600; color: var(--fg); white-space: nowrap; }
+.triggers code { font: 600 0.9rem ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); white-space: nowrap; }
 .now { min-height: 3em; margin: 0; font-size: 1.05rem; }
 
 /* 3D player */

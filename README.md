@@ -24,6 +24,12 @@ The views are plain CSS 3D transforms with no library. The cube is 27 cubies. A 
 
 The rotation axis and direction come from the same model as the solver. The checks that need a browser measured every sticker in both views for all 18 moves. With the layer rotated to the end of the turn, each moved sticker landed on the slot that `QUARTER_PERMS` predicts, to within 0.001 px.
 
+## Trigger names
+
+A trigger is a short sequence of turns that cubers practice, such as Rightie (R U R' U'). `js/triggers.js` lists the names and finds them in a solution. When one appears, the player boxes its chips and writes the name under them, and the text for the current move says which move of the trigger it is. A trigger also matches when the cube is held differently, so F R F' R' is Rightie with the cube turned. The turned forms come from the 24 rotations of the cube.
+
+The solver chooses solutions for their length, so triggers are rare in its output. In 300 random scrambles solved with a 150 ms budget, none of the solutions contained a trigger written as listed, and 4 contained one once turned forms counted. Hedgeslammer (r' F R F') starts with a wide turn, which the solver never makes, so it is listed but never matched. The moves for Sune and Antisune are the standard ones. Antisune is the inverse of Sune.
+
 ## Files
 
 | Path | Purpose |
@@ -31,11 +37,13 @@ The rotation axis and direction come from the same model as the solver. The chec
 | `index.html`, `css/style.css` | Page and styles |
 | `js/app.js` | Cube editor and solution player |
 | `js/view3d.js` | 3D cube views and the animated face turns |
+| `js/triggers.js` | Trigger names and the matcher that finds them in a solution |
+| `js/history.js` | Bounded undo stack for the color editor |
 | `js/solver.worker.js` | Web Worker that builds tables and runs searches |
 | `js/solver.js` | Two-phase search |
 | `js/tables.js` | Coordinates, move tables and pruning tables |
 | `js/cube.js` | Facelet and cubie model, validation, move application |
-| `tests/` | Tests for the model, the solver and the layer and sticker data behind the 3D view |
+| `tests/` | Tests for the model, the solver, the data behind the 3D view, the trigger matcher and the undo stack |
 
 Sticker positions and quarter turns in `js/cube.js` are derived from 3D coordinates, so the facelet layout and the cubie moves cannot disagree.
 
@@ -44,6 +52,8 @@ Sticker positions and quarter turns in `js/cube.js` are derived from 3D coordina
 The cube is a 54 character string of face letters in the order U1..U9, R1..R9, F1..F9, D1..D9, L1..L9, B1..B9. Hold the cube with white on top and green facing you. The center stickers define the faces, so the colors are white for U, red for R, green for F, yellow for D, orange for L and blue for B.
 
 The editor keeps the cube in the URL hash, using `.` for stickers that are not set yet, so a state can be shared or bookmarked.
+
+The Undo button, or Ctrl+Z and Cmd+Z, steps back one change. A press and drag across several stickers is one change. Clear, Random scramble and Solved cube can be undone as well.
 
 ## Run locally
 

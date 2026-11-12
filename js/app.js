@@ -3,6 +3,8 @@
  */
 
 import { FACE_LETTERS, SOLVED, applyMoves, invertMoves, parseMove, randomScramble, validate } from './cube.js';
+import { createHistory } from './history.js';
+import { TRIGGERS, findTriggers, triggerLabel } from './triggers.js';
 import { CubeStage } from './view3d.js';
 
 const COLOR = { U: 'white', R: 'red', F: 'green', D: 'yellow', L: 'orange', B: 'blue' };
@@ -14,6 +16,7 @@ const state = {
   stickers: Array(54).fill(null),
   paint: 'U',
   solution: null,
+  triggers: [],
   start: '',
   step: 0,
   solving: false,
@@ -21,6 +24,14 @@ const state = {
 };
 const setCenters = () => FACE_LETTERS.split('').forEach((letter, f) => (state.stickers[f * 9 + 4] = letter));
 setCenters();
+
+/** Earlier states of the painted cube, for the Undo button. Not named history, which is window.history. */
+const undoStack = createHistory(100);
+const keyOf = (stickers) => stickers.map((s) => s ?? '.').join('');
+/** Call before replacing the stickers with next. Saves the current cube when next differs from it. */
+function remember(next) {
+  if (keyOf(next) !== keyOf(state.stickers)) undoStack.push(state.stickers);
+}
 
 const stage = new CubeStage([$('#view-front'), $('#view-back')]);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -120,10 +131,17 @@ function setPaint(letter) {
   });
 }
 
+// One press and drag across several stickers is a single undo step.
+let strokeSaved = false;
+
 function paintSticker(index) {
   if (index % 9 === 4) return;
   if (state.solution) clearSolution();
   if (state.stickers[index] === state.paint) return;
+  if (!strokeSaved) {
+    undoStack.push(state.stickers);
+    strokeSaved = true;
+  }
   state.stickers[index] = state.paint;
   changed();
 }
@@ -134,6 +152,7 @@ net.addEventListener('pointerdown', (event) => {
   if (!sticker) return;
   event.preventDefault();
   dragging = true;
+  strokeSaved = false;
   paintSticker(Number(sticker.dataset.index));
 });
 net.addEventListener('pointermove', (event) => {
@@ -141,10 +160,19 @@ net.addEventListener('pointermove', (event) => {
   const sticker = document.elementFromPoint(event.clientX, event.clientY)?.closest('.sticker');
   if (sticker) paintSticker(Number(sticker.dataset.index));
 });
-['pointerup', 'pointercancel'].forEach((name) => window.addEventListener(name, () => (dragging = false)));
+['pointerup', 'pointercancel'].forEach((name) =>
+  window.addEventListener(name, () => {
+    dragging = false;
+    strokeSaved = false;
+  }),
+);
 net.addEventListener('click', (event) => {
   const sticker = event.target.closest('.sticker');
-  if (sticker && event.detail === 0) paintSticker(Number(sticker.dataset.index));
+  if (sticker && event.detail === 0) {
+    strokeSaved = false;
+    paintSticker(Number(sticker.dataset.index));
+    strokeSaved = false;
+  }
 });
 
 $('#letters').addEventListener('change', (event) => net.classList.toggle('letters', event.target.checked));
@@ -204,6 +232,7 @@ function updateControls() {
   $('#play').disabled = !has || (state.step >= n && !state.playing);
   $('#play').textContent = state.playing ? 'Pause' : 'Play';
   $('#copy').disabled = !has || n === 0;
+  $('#undo').disabled = undoStack.size === 0;
 }
 
 function changed() {
@@ -248,27 +277,59 @@ function stopSolve() {
 
 /* ---------- solution player ---------- */
 
+/** Trigger name for display, for example "Rightie (Sexy Move) with the cube turned". */
+const groupName = (group) => triggerLabel(group.trigger) + (group.turned ? ' with the cube turned' : '');
+
+function summarize(moves, found) {
+  if (moves.length === 0) return 'Nothing to do.';
+  const base = `${moves.length} moves, counting each half turn as 1.`;
+  if (found.length === 0) return `${base} No named triggers appear in it.`;
+  const parts = found.map((f) => `${groupName(f)} at moves ${f.start + 1} to ${f.end}`);
+  return `${base} It contains ${parts.join(', ')}.`;
+}
+
+function makeChip(move, index) {
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'chip';
+  chip.textContent = move;
+  chip.addEventListener('click', () => (pause(), goTo(index + 1, true)));
+  return chip;
+}
+
 function showSolution(moves) {
   if (!state.solution) state.start = state.stickers.join('');
   state.solution = moves;
+  state.triggers = findTriggers(moves);
   state.step = 0;
   pause();
   $('#solution').hidden = false;
-  $('#solution-meta').textContent =
-    moves.length === 0 ? 'Nothing to do.' : `${moves.length} moves, counting each half turn as 1.`;
-  const list = $('#moves');
-  list.replaceChildren(
-    ...moves.map((move, i) => {
-      const item = document.createElement('li');
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'chip';
-      chip.textContent = move;
-      chip.addEventListener('click', () => (pause(), goTo(i + 1, true)));
-      item.append(chip);
-      return item;
-    }),
-  );
+  $('#solution-meta').textContent = summarize(moves, state.triggers);
+
+  // Moves that make up a trigger share one boxed item with the trigger's name under them.
+  const items = [];
+  for (let i = 0; i < moves.length; ) {
+    const group = state.triggers.find((f) => f.start === i);
+    const item = document.createElement('li');
+    if (group) {
+      item.className = 'group';
+      item.dataset.start = group.start;
+      item.dataset.end = group.end;
+      const chips = document.createElement('div');
+      chips.className = 'group-chips';
+      for (let k = group.start; k < group.end; k++) chips.append(makeChip(moves[k], k));
+      const name = document.createElement('span');
+      name.className = 'group-name';
+      name.textContent = groupName(group);
+      item.append(chips, name);
+      i = group.end;
+    } else {
+      item.append(makeChip(moves[i], i));
+      i += 1;
+    }
+    items.push(item);
+  }
+  $('#moves').replaceChildren(...items);
   goTo(0);
 }
 
@@ -276,6 +337,7 @@ function clearSolution() {
   pause();
   stage.settle();
   state.solution = null;
+  state.triggers = [];
   state.step = 0;
   $('#solution').hidden = true;
   render();
@@ -303,12 +365,20 @@ async function goTo(step, animate = false) {
     chip.classList.toggle('done', i < state.step);
     chip.classList.toggle('current', i === state.step);
   });
+  $('#moves').querySelectorAll('.group').forEach((group) => {
+    const inside = Number(group.dataset.start) <= state.step && state.step < Number(group.dataset.end);
+    group.classList.toggle('active', inside);
+  });
   const now = $('#now');
   if (n === 0) now.textContent = 'The cube is already solved.';
   else if (state.step >= n) now.textContent = 'Solved.';
   else {
     const move = state.solution[state.step];
-    now.textContent = `Move ${state.step + 1} of ${n}: ${move}. ${describe(move)}`;
+    const group = state.triggers.find((f) => f.start <= state.step && state.step < f.end);
+    const part = group
+      ? ` This is move ${state.step - group.start + 1} of ${group.end - group.start} in ${groupName(group)}.`
+      : '';
+    now.textContent = `Move ${state.step + 1} of ${n}: ${move}. ${describe(move)}${part}`;
   }
   render();
   updateControls();
@@ -363,10 +433,22 @@ $('#solved').addEventListener('click', () => loadCube(SOLVED));
 $('#clear').addEventListener('click', () => {
   if (state.solving) stopSolve();
   clearSolution();
-  state.stickers.fill(null);
-  setCenters();
+  const blank = state.stickers.map((s, i) => (i % 9 === 4 ? s : null));
+  remember(blank);
+  state.stickers = blank;
   changed();
 });
+$('#undo').addEventListener('click', undo);
+
+/** Puts the cube back as it was before the last color change, clear or load. */
+function undo() {
+  const previous = undoStack.pop();
+  if (!previous) return;
+  if (state.solving) stopSolve();
+  clearSolution();
+  state.stickers = previous;
+  changed();
+}
 $('#first').addEventListener('click', () => (pause(), goTo(0)));
 $('#prev').addEventListener('click', () => (pause(), goTo(state.step - 1, true)));
 $('#next').addEventListener('click', () => (pause(), goTo(state.step + 1, true)));
@@ -382,8 +464,13 @@ $('#copy').addEventListener('click', async (event) => {
 });
 
 window.addEventListener('keydown', (event) => {
-  if (event.metaKey || event.ctrlKey || event.altKey) return;
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'z') {
+    event.preventDefault();
+    undo();
+    return;
+  }
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
   if (KEYS[event.key.toLowerCase()]) setPaint(KEYS[event.key.toLowerCase()]);
   else if (state.solution && event.key === 'ArrowRight') (pause(), goTo(state.step + 1, true));
   else if (state.solution && event.key === 'ArrowLeft') (pause(), goTo(state.step - 1, true));
@@ -392,9 +479,29 @@ window.addEventListener('keydown', (event) => {
 function loadCube(cube) {
   if (state.solving) stopSolve();
   clearSolution();
+  remember([...cube]);
   state.stickers = [...cube];
   changed();
 }
+
+/* ---------- trigger names ---------- */
+
+$('#trigger-list').replaceChildren(
+  ...TRIGGERS.map((trigger) => {
+    const row = document.createElement('tr');
+    const name = document.createElement('th');
+    name.scope = 'row';
+    name.textContent = triggerLabel(trigger);
+    const moves = document.createElement('td');
+    const code = document.createElement('code');
+    code.textContent = trigger.moves;
+    moves.append(code);
+    const note = document.createElement('td');
+    note.textContent = trigger.note ?? '';
+    row.append(name, moves, note);
+    return row;
+  }),
+);
 
 /* ---------- start ---------- */
 
