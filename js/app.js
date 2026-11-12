@@ -4,7 +4,7 @@
 
 import { FACE_LETTERS, SOLVED, applyMoves, invertMoves, parseMove, randomScramble, validate } from './cube.js';
 import { createHistory } from './history.js';
-import { TRIGGERS, findTriggers, triggerLabel } from './triggers.js';
+import { PATTERNS, TRIGGERS, findTriggers, triggerLabel } from './triggers.js';
 import { CubeStage } from './view3d.js';
 
 const COLOR = { U: 'white', R: 'red', F: 'green', D: 'yellow', L: 'orange', B: 'blue' };
@@ -280,6 +280,10 @@ function stopSolve() {
 /** Trigger name for display, for example "Rightie (Sexy Move) with the cube turned". */
 const groupName = (group) => triggerLabel(group.trigger) + (group.turned ? ' with the cube turned' : '');
 
+const triggerSlug = (trigger) => trigger.name.toLowerCase();
+/** Each trigger has its own color, set as --t-<name> in the stylesheet. */
+const triggerColor = (trigger) => `var(--t-${triggerSlug(trigger)}, var(--muted))`;
+
 function summarize(moves, found) {
   if (moves.length === 0) return 'Nothing to do.';
   const base = `${moves.length} moves, counting each half turn as 1.`;
@@ -306,7 +310,10 @@ function showSolution(moves) {
   $('#solution').hidden = false;
   $('#solution-meta').textContent = summarize(moves, state.triggers);
 
-  // Moves that make up a trigger share one boxed item with the trigger's name under them.
+  const used = new Set(state.triggers.map((f) => triggerSlug(f.trigger)));
+  $('#trigger-key').querySelectorAll('li').forEach((li) => li.classList.toggle('used', used.has(li.dataset.t)));
+
+  // Moves that make up a trigger are joined into one colored chunk with the trigger's name under it.
   const items = [];
   for (let i = 0; i < moves.length; ) {
     const group = state.triggers.find((f) => f.start === i);
@@ -315,6 +322,7 @@ function showSolution(moves) {
       item.className = 'group';
       item.dataset.start = group.start;
       item.dataset.end = group.end;
+      item.style.setProperty('--tc', triggerColor(group.trigger));
       const chips = document.createElement('div');
       chips.className = 'group-chips';
       for (let k = group.start; k < group.end; k++) chips.append(makeChip(moves[k], k));
@@ -484,22 +492,25 @@ function loadCube(cube) {
   changed();
 }
 
-/* ---------- trigger names ---------- */
+/* ---------- trigger rules ---------- */
 
-$('#trigger-list').replaceChildren(
+// The key under the move list: each trigger with its moves in its own color.
+// A trigger the solver can never produce is drawn with a dashed outline.
+$('#trigger-key').replaceChildren(
   ...TRIGGERS.map((trigger) => {
-    const row = document.createElement('tr');
-    const name = document.createElement('th');
-    name.scope = 'row';
+    const item = document.createElement('li');
+    item.dataset.t = triggerSlug(trigger);
+    item.style.setProperty('--tc', triggerColor(trigger));
+    if (!PATTERNS.some((pattern) => pattern.trigger === trigger)) item.classList.add('never');
+    if (trigger.note) item.title = trigger.note;
+    const moves = document.createElement('span');
+    moves.className = 'key-moves';
+    moves.textContent = trigger.moves;
+    const name = document.createElement('span');
+    name.className = 'key-name';
     name.textContent = triggerLabel(trigger);
-    const moves = document.createElement('td');
-    const code = document.createElement('code');
-    code.textContent = trigger.moves;
-    moves.append(code);
-    const note = document.createElement('td');
-    note.textContent = trigger.note ?? '';
-    row.append(name, moves, note);
-    return row;
+    item.append(moves, name);
+    return item;
   }),
 );
 

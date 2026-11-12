@@ -11,6 +11,14 @@
   --body: #15171b;
   --unset: #b4bbc5;
   --stage: #e8ebf1;
+  /* one color per trigger, and the text color on a filled chip */
+  --t-rightie: #2457d6;
+  --t-leftie: #11785a;
+  --t-sledgehammer: #b45f06;
+  --t-hedgeslammer: #a8327f;
+  --t-sune: #c0392b;
+  --t-antisune: #6b4fc9;
+  --on-tc: #ffffff;
   --c-U: #f4f4f2;
   --c-R: #d6342c;
   --c-F: #1f9d55;
@@ -38,6 +46,13 @@
     --warn: #f2c14e;
     --unset: #4b5460;
     --stage: #2b3340;
+    --t-rightie: #7aa0ff;
+    --t-leftie: #4cc9a0;
+    --t-sledgehammer: #f0a64a;
+    --t-hedgeslammer: #f08fcf;
+    --t-sune: #ff8f86;
+    --t-antisune: #b7a2ff;
+    --on-tc: #0a1020;
   }
 }
 
@@ -212,29 +227,49 @@ label.inline { display: inline-flex; align-items: center; gap: 8px; color: var(-
 .chip.done { opacity: 0.45; }
 .chip.current { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); opacity: 1; }
 
-/* a trigger: its chips boxed together with the name underneath */
-.moves .group {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 5px 7px 4px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--accent) 8%, var(--card));
-  max-width: 100%;
-}
-.moves .group.active { border-color: var(--accent); }
+/* A trigger is a chunk: its chips are joined, tinted in the trigger's color, with a bar and the name underneath. */
 .moves { align-items: flex-start; }
-/* line single chips up with the chips inside a box (its padding plus border) */
-.moves > li:not(.group) { padding-top: 6px; }
-.group-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.group-name { font-size: 0.78rem; line-height: 1.25; color: var(--muted); }
+.moves .group { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+.group-chips { display: inline-flex; flex-wrap: wrap; }
+.group .chip {
+  background: color-mix(in srgb, var(--tc) 16%, var(--card));
+  border-color: var(--tc);
+  border-radius: 0;
+  margin-left: -1px;
+}
+.group .chip:first-child { margin-left: 0; border-radius: 9px 0 0 9px; }
+.group .chip:last-child { border-radius: 0 9px 9px 0; }
+.group .chip:hover:not(:disabled) { position: relative; }
+.group .chip.current { background: var(--tc); border-color: var(--tc); color: var(--on-tc); }
+.group-name {
+  padding-top: 2px;
+  border-top: 3px solid var(--tc);
+  border-radius: 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: color-mix(in srgb, var(--tc) 70%, var(--fg));
+}
 
-.table-wrap { overflow-x: auto; }
-.triggers { border-collapse: collapse; margin-top: 4px; }
-.triggers th, .triggers td { padding: 6px 14px 6px 0; text-align: left; vertical-align: top; border-top: 1px solid var(--line); }
-.triggers th { font-weight: 600; color: var(--fg); white-space: nowrap; }
-.triggers code { font: 600 0.9rem ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--fg); white-space: nowrap; }
+/* the key: every trigger with its moves in its color; a ring marks the ones used in this solution */
+.rules { margin: 0 0 12px; }
+.key-title { margin: 0 0 6px; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; margin: 0 0 6px; padding: 0; }
+.key li { display: inline-flex; align-items: center; gap: 7px; }
+.key-moves {
+  padding: 2px 9px;
+  border: 1px solid var(--tc);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tc) 16%, var(--card));
+  font: 600 0.82rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+}
+.key-name { font-size: 0.88rem; }
+.key li.used .key-moves { box-shadow: 0 0 0 2px var(--tc); }
+.key li.used .key-name { font-weight: 600; }
+.key li.never { opacity: 0.75; }
+.key li.never .key-moves { border-style: dashed; }
+.rules .hint { margin: 0; }
 .now { min-height: 3em; margin: 0; font-size: 1.05rem; }
 
 /* 3D player */

@@ -26,7 +26,7 @@ The rotation axis and direction come from the same model as the solver. The chec
 
 ## Trigger names
 
-A trigger is a short sequence of turns that cubers practice, such as Rightie (R U R' U'). `js/triggers.js` lists the names and finds them in a solution. When one appears, the player boxes its chips and writes the name under them, and the text for the current move says which move of the trigger it is. A trigger also matches when the cube is held differently, so F R F' R' is Rightie with the cube turned. The turned forms come from the 24 rotations of the cube.
+A trigger is a short sequence of turns that cubers practice, such as Rightie (R U R' U'). `js/triggers.js` lists the names and finds them in a solution. When one appears, the player joins its chips into one chunk in the color of that trigger, with a bar and the name under it, and the text for the current move says which move of the trigger it is. A key under the move list shows the rules, with every trigger's moves in its color, and rings the triggers used in the solution. A trigger also matches when the cube is held differently, so F R F' R' is Rightie with the cube turned. The turned forms come from the 24 rotations of the cube.
 
 The solver chooses solutions for their length, so triggers are rare in its output. In 300 random scrambles solved with a 150 ms budget, none of the solutions contained a trigger written as listed, and 4 contained one once turned forms counted. Hedgeslammer (r' F R F') starts with a wide turn, which the solver never makes, so it is listed but never matched. The moves for Sune and Antisune are the standard ones. Antisune is the inverse of Sune.
 
